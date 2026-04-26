@@ -1,7 +1,7 @@
 google-adk
 python-dotenv
-flask
-flask-cors
+flask>=3.0.0
+flask-cors>=4.0.0
 google-generativeai
 groq
 tavily-python
