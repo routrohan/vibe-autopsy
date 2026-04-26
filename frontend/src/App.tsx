@@ -40,7 +40,9 @@ function App() {
   }, []);
 
   const scrollToBottom = () => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (logs.length > 0) {
+      logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   };
 
   useEffect(scrollToBottom, [logs]);
@@ -192,14 +194,15 @@ function App() {
                             {result.integrity_score}<span className="text-3xl opacity-30 ml-4 font-black">%</span>
                           </div>
                           <div className="text-[0.8rem] text-[#e0e0e0]/60 uppercase leading-relaxed border-l-2 border-[#4ade80]/20 pl-8 font-bold max-w-[300px]">
-                            How well you're lying to LinkedIn vs. reality.
+                            ALIGNMENT BETWEEN YOUR CURATED PROFILE AND ACTUAL DIGITAL FOOTPRINT.
                           </div>
                         </div>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <div className="text-lg font-black uppercase text-[#4ade80] tracking-[0.3em] border-b border-[#4ade80]/10 pb-2 uppercase text-xs">Digital Classification</div>
+                    <div className="text-lg font-black uppercase text-[#4ade80] tracking-[0.3em] uppercase text-xs">Digital Classification</div>
+                    <div className="text-[0.65rem] text-[#4ade80]/40 uppercase mb-4 font-black tracking-widest border-b border-[#4ade80]/10 pb-4 mt-2">HOW THE ALGORITHM CATEGORIZES YOUR DIGITAL FOOTPRINT.</div>
                     <ul className="space-y-4 pl-4">
                       {result.classification_list?.map((c, i) => (
                         <li key={i} className="text-[1.1rem] flex items-start">
@@ -211,7 +214,8 @@ function App() {
                   </div>
 
                   <div className="bg-orange-500/5 border-l-4 border-orange-500 p-12 relative shadow-lg">
-                    <div className="text-[0.8rem] text-orange-500 font-black uppercase mb-6 tracking-[0.5em] text-xs">Subliminal Observation</div>
+                    <div className="text-[0.8rem] text-orange-500 font-black uppercase tracking-[0.5em] text-xs">Subliminal Observation</div>
+                    <div className="text-[0.65rem] text-orange-500/60 uppercase font-black tracking-widest italic mb-6 mt-2">THE UNFILTERED TAKEAWAY FROM YOUR CAREER HISTORY.</div>
                     <p className="text-[1.2rem] italic leading-relaxed text-orange-50 font-bold antialiased leading-loose uppercase">
                       "<SafeRender value={result.brutal_roast} />"
                     </p>
@@ -219,9 +223,12 @@ function App() {
 
                   <div className="grid grid-cols-1 gap-12">
                     <div className="border border-purple-500/20 bg-purple-500/5 p-10 shadow-xl">
-                      <div className="flex items-center space-x-4 text-purple-400 mb-8 uppercase text-[0.8rem] font-black tracking-[0.5em] text-xs">
-                        <TrendingUp className="w-7 h-7" />
-                        <span>Destiny Manifest 2040</span>
+                      <div className="mb-8">
+                        <div className="flex items-center space-x-4 text-purple-400 uppercase text-[0.8rem] font-black tracking-[0.5em] text-xs mb-2">
+                          <TrendingUp className="w-7 h-7" />
+                          <span>Destiny Manifest 2040</span>
+                        </div>
+                        <div className="text-[0.65rem] text-purple-400/60 uppercase font-black tracking-widest italic pl-11">WHERE YOUR CURRENT TRAJECTORY WILL INEVITABLY LEAD.</div>
                       </div>
                       <div className="text-[1.2rem] text-purple-100 font-bold uppercase underline decoration-purple-500/20 underline-offset-8 leading-relaxed italic antialiased tracking-tight">
                         <SafeRender value={result.future_milestone} />
@@ -234,7 +241,7 @@ function App() {
                         <span>Adversary Signature</span>
                       </div>
                       <div className="space-y-8">
-                        <div className="text-[0.7rem] text-red-500/50 uppercase font-black tracking-widest italic mb-2 uppercase text-xs">The professional plotting to out-curate you.</div>
+                        <div className="text-[0.7rem] text-red-500/50 uppercase font-black tracking-widest italic mb-2 uppercase text-xs">Your ultimate corporate rival based on your career.</div>
                         <div className="text-xl text-red-100 font-black uppercase tracking-widest border-b border-red-500/10 pb-6 uppercase">
                             <SafeRender value={result.nemesis_persona} />
                         </div>
@@ -246,8 +253,11 @@ function App() {
                   </div>
 
                   <div className="space-y-8 pb-16">
-                    <div className="text-base text-[#4ade80]/20 font-black uppercase tracking-[0.8em] flex items-center justify-center text-xs">
-                       --- Verified_Nodes ---
+                    <div className="text-center">
+                        <div className="text-base text-[#4ade80]/20 font-black uppercase tracking-[0.8em] inline-block text-xs mb-2">
+                           --- Verified_Nodes ---
+                        </div>
+                        <div className="text-[0.65rem] text-[#4ade80]/20 uppercase font-black tracking-widest italic block">THE HARD FACTS PULLED FROM YOUR PUBLIC FOOTPRINT.</div>
                     </div>
                     <div className="flex flex-wrap gap-6 justify-center">
                       {result.anchor_facts?.map((f, i) => (

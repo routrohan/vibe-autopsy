@@ -1,8 +1,9 @@
-google-adk
 python-dotenv
-flask>=3.0.0
-flask-cors>=4.0.0
-google-generativeai
-groq
-tavily-python
+flask==3.0.3
+flask-cors==4.0.1
+groq==0.11.0
+tavily-python==0.5.0
+gunicorn==22.0.0
+google-adk[extensions]==1.1.0
+litellm
 gunicorn
