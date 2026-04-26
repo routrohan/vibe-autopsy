@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  display: block; /* KILL VITE CENTERING */
+  background-color: #0d1117;
+}
+
+.stat-table table { border-collapse: collapse; width: 100%; border: none; margin: 0; }
+.stat-table th, .stat-table td { border: 1px solid #4ade8011; padding: 12px 14px; text-align: left; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

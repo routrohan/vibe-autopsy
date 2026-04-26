@@ -1,0 +1,8 @@
+google-adk
+python-dotenv
+flask
+flask-cors
+google-generativeai
+groq
+tavily-python
+gunicorn
