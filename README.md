@@ -9,6 +9,6 @@ You put in your name and some context, and a bunch of AI run after your digital 
 * **Backend:** Flask + Python
 * **Orchestration:** Google ADK (Agent Development Kit)
 * **Brain:** GPT OSS 120B (via Groq because I ran out of gemini credits, gemini boooo)
-* **Scout:** Tavily Search API (to dig up the receipts)
+* **Scout:** Tavily Search API (don't misuse my free credits)
 
 *Stay humble.*
