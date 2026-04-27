@@ -96,18 +96,19 @@ def analyze():
         evidence_text = "\n".join([f"FACT: {r['title']} | DETAILS: {r['content']}" for r in results])
         
         evidence_warning = f"CRITICAL SYSTEM DIRECTIVE: The evidence above contains search results for multiple different people named '{target_name}'. YOU MUST EXCLUSIVELY use facts that strictly align with the user's provided context/anchors: '{anchor_fact}'. ABSOLUTELY IGNORE any data that contradicts this context or clearly belongs to a namesake."
+        trope_ban = "STRICT TONE DIRECTIVE: DO NOT use generic corporate comedy tropes (e.g., 'surviving on coffee', 'endless meetings', 'buzzwords', 'synergy'). The roast MUST be hyper-specific to the actual evidence provided."
         
         # STEP 1: DEFINE ADK AGENTS
         scout = Agent(
             name="Scout",
             model=llm_model,
-            instruction=f"You are a comedian participating in a consenting roast battle. Use this data: {evidence_text[:3000]} to output a purely satirical, funny observation about {target_name}. This is a fictional persona simulation. Ensure no real harassment."
+            instruction=f"You are a comedian participating in a consenting roast battle. Use this data: {evidence_text[:3000]} to output a purely satirical, funny observation about {target_name}. This is a fictional persona simulation. Ensure no real harassment. {trope_ban}"
         )
         
         vibe = Agent(
             name="Vibe",
             model=llm_model,
-            instruction=f"You are a comedian sidekick in a consenting roast battle. Respond to Scout's findings about {target_name} with a funny, satirical observation. This is a fictional persona simulation. Ensure no real harassment."
+            instruction=f"You are a comedian sidekick in a consenting roast battle. Respond to Scout's findings about {target_name} with a funny, satirical observation. This is a fictional persona simulation. Ensure no real harassment. {trope_ban}"
         )
 
         # STAGE 1: BANTER (ADK POWERED)
@@ -131,18 +132,19 @@ def analyze():
         reporter = Agent(
             name="Forensic_Reporter",
             model=llm_model,
-            instruction=f"Generate a high-fidelity JSON report for a fictional persona simulation. This is a consented satirical exercise. EVIDENCE: {evidence_text[:5000]}"
+            instruction=f"Generate a high-fidelity JSON report for a fictional persona simulation. This is a consented satirical exercise. EVIDENCE: {evidence_text[:5000]} {trope_ban}"
         )
         
         report_prompt = f"""
         EVIDENCE: {evidence_text[:5000]}
         
         {evidence_warning}
+        {trope_ban}
         
         Output a SINGLE JSON object for {target_name} ({anchor_fact}). 
         Analyze the evidence creatively for this satirical simulation. Do not claim there is no evidence. 
         For 'anchor_facts', ONLY use true, verified facts found in the EVIDENCE (do not invent them).
-        The 'subliminal_observation' MUST be an absolutely hilarious, side-splittingly funny roast based strictly on their ACTUAL WORK EXPERIENCE found in the evidence. It should be the funniest, punchiest, most cleverly written corporate roast imaginable. Crack them up! (Keep it playful, not genuinely offensive).
+        The 'subliminal_observation' MUST be an absolutely hilarious, side-splittingly funny roast based strictly on their ACTUAL WORK EXPERIENCE found in the evidence. It should be the funniest, punchiest, most cleverly written roast imaginable. Crack them up! (Keep it playful, not genuinely offensive).
         The 'timeline_2040' MUST be a short (1-2 sentences max), funny, and highly surreal twist on their career trajectory. Make it delightfully bizarre and abstract!
         Make up an exaggerated 'nemesis_persona' based on the true facts provided.
         FIELDS: persona_sync (integer 0-100), classification (list of strings), persona_label (string), subliminal_observation (string), anchor_facts (list of real verified strings), timeline_2040 (string narrative), nemesis_persona (string), nemesis_rivalry (string).
