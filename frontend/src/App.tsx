@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Shield, Zap, TrendingUp, Skull, Link } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { useState, useRef, useEffect } from 'react';
+import { Shield, TrendingUp, Skull } from 'lucide-react';
 
 interface Log {
   agent: string;

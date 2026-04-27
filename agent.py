@@ -75,6 +75,10 @@ def sanitize_list(data, fallback=None):
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
+@app.route('/ping', methods=['GET'])
+def ping():
+    return "OK", 200
+
 @app.route('/analyze', methods=['POST', 'OPTIONS'])
 def analyze():
     if request.method == 'OPTIONS': return Response(status=204)
