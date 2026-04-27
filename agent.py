@@ -160,7 +160,7 @@ def analyze():
                         print(f"[REPORTER] Raw Output was: {clean_res}")
                         res = {}
             
-            yield f"data: {json.dumps({
+            payload = {
                 'type': 'result',
                 'name': target_name,
                 'integrity_score': res.get('persona_sync', 80),
@@ -171,7 +171,8 @@ def analyze():
                 'future_milestone': str(res.get('timeline_2040', 'Trajectory locked.')),
                 'nemesis_persona': str(res.get('nemesis_persona', 'Unknown')),
                 'nemesis_rivalry': str(res.get('nemesis_rivalry', 'A petty dispute.'))
-            })}\n\n"
+            }
+            yield f"data: {json.dumps(payload)}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'type': 'log', 'agent': 'System', 'message': f'REASONING_ERROR: {str(e)}'})}\n\n"
 
