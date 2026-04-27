@@ -34,7 +34,6 @@ const SafeRender = ({ value }: { value: any }) => {
 function App() {
   const [name, setName] = useState('');
   const [context, setContext] = useState('');
-  const [linkedinUrl, setLinkedinUrl] = useState('');
   const [logs, setLogs] = useState<Log[]>([]);
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
@@ -62,7 +61,7 @@ function App() {
       const response = await fetch(`${API_URL}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, context, linkedin_url: linkedinUrl }),
+        body: JSON.stringify({ name, context }),
       });
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -142,26 +141,15 @@ function App() {
             />
           </div>
 
-          <div className="mb-8">
-            <label className="block text-xs md:text-sm font-black text-[#4ade80]/40 uppercase tracking-[0.4em] mb-3">Context_Anchor</label>
-            <input
-              type="text"
-              className="w-full bg-[#0d1117] border border-[#4ade80]/20 p-5 text-[#4ade80] outline-none focus:border-[#4ade80] font-bold text-xl cursor-text"
-              placeholder="ANCHOR"
-              value={context}
-              onChange={(e) => setContext(e.target.value)}
-            />
-          </div>
-
           <div className="mb-2">
-            <label className="block text-xs md:text-sm font-black text-[#4ade80]/40 uppercase tracking-[0.4em] mb-3">LinkedIn_Record</label>
+            <label className="block text-xs md:text-sm font-black text-[#4ade80]/40 uppercase tracking-[0.4em] mb-3">Context_Anchor</label>
             <div className="flex flex-col md:flex-row gap-6">
               <input
                 type="text"
-                className="flex-1 bg-[#0d1117] border border-[#4ade80]/20 p-5 text-[#4ade80] outline-none focus:border-[#4ade80] font-bold text-lg cursor-text"
-                placeholder="HTTPS://LINKEDIN.COM/IN/PROFILE"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
+                className="flex-1 w-full bg-[#0d1117] border border-[#4ade80]/20 p-5 text-[#4ade80] outline-none focus:border-[#4ade80] font-bold text-xl cursor-text"
+                placeholder="COMPANY, UNIVERSITY, OR CITY"
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
               />
               <button
                 onClick={runAnalysis}
@@ -170,6 +158,9 @@ function App() {
               >
                 {loading ? 'ANALYZING...' : 'RUN_SCAN'}
               </button>
+            </div>
+            <div className="mt-3 text-[0.65rem] md:text-xs text-[#4ade80]/30 font-black uppercase tracking-widest">
+              [NOTE]: Drop a company, university, or city here so the algorithm locks onto the right person.
             </div>
           </div>
 
