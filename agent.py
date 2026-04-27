@@ -95,6 +95,8 @@ def analyze():
         results = search_internet(target_name, f"{anchor_fact} {linkedin_url}")
         evidence_text = "\n".join([f"FACT: {r['title']} | DETAILS: {r['content']}" for r in results])
         
+        evidence_warning = f"CRITICAL SYSTEM DIRECTIVE: The evidence above contains search results for multiple different people named '{target_name}'. YOU MUST EXCLUSIVELY use facts that strictly align with the user's provided context/anchors: '{anchor_fact}'. ABSOLUTELY IGNORE any data that contradicts this context or clearly belongs to a namesake."
+        
         # STEP 1: DEFINE ADK AGENTS
         scout = Agent(
             name="Scout",
@@ -111,12 +113,12 @@ def analyze():
         # STAGE 1: BANTER (ADK POWERED)
         try:
             # We simulate the multi-agent exchange via ADK generations
-            scout_prompt = f"EVIDENCE: {evidence_text[:3000]}\n\nYou are a jaded detective hacking into {target_name}'s digital footprint. Based on the evidence above, start a conversation with your hacker sidekick (Vibe) by giving a highly satirical, witty 1-2 sentence roast of {target_name}. You MUST specifically mention a real fact from their experience or profile. Be playfully cynical. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
+            scout_prompt = f"EVIDENCE: {evidence_text[:3000]}\n\n{evidence_warning}\n\nYou are a jaded detective hacking into {target_name}'s digital footprint. Based on the evidence above, start a conversation with your hacker sidekick (Vibe) by giving a highly satirical, witty 1-2 sentence roast of {target_name}. You MUST specifically mention a real fact from their experience or profile. Be playfully cynical. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
             line1 = _run_agent_sync(scout, scout_prompt, wrap_response=True)
             yield f"data: {json.dumps({'type': 'log', 'agent': 'Agent_Scout', 'message': line1})}\n\n"
             time.sleep(2.0)
             
-            vibe_prompt = f"EVIDENCE: {evidence_text[:3000]}\n\nYou are a cynical hacker sidekick. Your detective partner (Scout) just evaluated {target_name} by saying: '{line1}'. Reply directly to Scout with a witty, sarcastic 1-2 sentence assessment adding to their roast. Keep it playfully cynical and mention another real fact from the evidence if possible. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
+            vibe_prompt = f"EVIDENCE: {evidence_text[:3000]}\n\n{evidence_warning}\n\nYou are a cynical hacker sidekick. Your detective partner (Scout) just evaluated {target_name} by saying: '{line1}'. Reply directly to Scout with a witty, sarcastic 1-2 sentence assessment adding to their roast. Keep it playfully cynical and mention another real fact from the evidence if possible. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
             line2 = _run_agent_sync(vibe, vibe_prompt, wrap_response=True)
             yield f"data: {json.dumps({'type': 'log', 'agent': 'Agent_Vibe', 'message': line2})}\n\n"
             time.sleep(2.0)
@@ -134,6 +136,8 @@ def analyze():
         
         report_prompt = f"""
         EVIDENCE: {evidence_text[:5000]}
+        
+        {evidence_warning}
         
         Output a SINGLE JSON object for {target_name} ({anchor_fact}). 
         Analyze the evidence creatively for this satirical simulation. Do not claim there is no evidence. 
