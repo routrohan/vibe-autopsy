@@ -21,7 +21,7 @@ def _run_agent_sync(agent_obj, prompt_text: str, wrap_response: bool = False) ->
     req = LlmRequest(
         contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt_text)])],
         config=types.GenerateContentConfig(
-            system_instruction=types.Content(role="system", parts=[types.Part.from_text(text=str(agent_obj.instruction))])
+            system_instruction=str(agent_obj.instruction)
         )
     )
     async def _get_text():
