@@ -50,16 +50,16 @@ def _run_agent_sync(agent_obj, prompt_text: str, wrap_response: bool = False) ->
 
 load_dotenv()
 
-# Initialize the 120B Core via the ADK OpenAI-compatible wrapper
+# Initialize the 8B Core via the ADK OpenAI-compatible wrapper
 llm_model = LiteLlm(
-    model="groq/openai/gpt-oss-120b",
+    model="groq/llama-3.1-8b-instant",
     api_key=os.environ["GROQ_API_KEY"]
 )
 
 def search_internet(query: str, anchor: str) -> list:
     try:
         tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
-        search_query = f'"{query}" {anchor} LinkedIn "work experience" career profile'
+        search_query = f'"{query}" {anchor} LinkedIn profile OR posts OR articles OR portfolio'
         print(f"[TAVILY] Executing search: {search_query}")
         response = tavily.search(query=search_query, search_depth="advanced", max_results=6)
         results = response.get('results', [])
@@ -91,17 +91,32 @@ def analyze():
     def generate():
         yield f"data: {json.dumps({'type': 'log', 'agent': 'System', 'message': 'ADK_PROTOCOL_INITIALIZED...'})}\n\n"
         
-        results = search_internet(target_name, anchor_fact)
-        evidence_text = "\n".join([f"FACT: {r['title']} | DETAILS: {r['content']}" for r in results])
+        raw_results = search_internet(target_name, anchor_fact)
+        
+        # STEP 1: ISOLATE THE RIGHT PERSON (Python-side filtering)
+        # 8B models struggle with filtering namesakes internally, so we filter the data first.
+        filtered_results = []
+        anchor_terms = [t.lower().strip() for t in anchor_fact.replace(',', ' ').split() if len(t.strip()) > 2]
+        
+        for r in raw_results:
+            text = (r.get('title', '') + " " + r.get('content', '')).lower()
+            if any(term in text for term in anchor_terms):
+                filtered_results.append(r)
+                
+        # If the filter wipes out everything, fallback to the top 2 results
+        if not filtered_results:
+            filtered_results = raw_results[:2]
+            
+        evidence_text = "\n".join([f"FACT: {r['title']} | DETAILS: {r['content']}" for r in filtered_results])
         
         evidence_warning = f"CRITICAL SYSTEM DIRECTIVE: The evidence above contains search results for multiple different people named '{target_name}'. YOU MUST EXCLUSIVELY use facts that strictly align with the user's provided context/anchors: '{anchor_fact}'. ABSOLUTELY IGNORE any data that contradicts this context or clearly belongs to a namesake."
-        trope_ban = "STRICT TONE DIRECTIVE: DO NOT use generic corporate comedy tropes (e.g., 'surviving on coffee', 'endless meetings', 'buzzwords', 'synergy'). The roast MUST be hyper-specific to the actual evidence provided."
+        trope_ban = "STRICT TONE DIRECTIVE: DO NOT use generic AI comedy tropes or lazy insults like 'mediocre', 'boring', 'average', 'surviving on coffee', or 'synergy'. Never insult them directly. Instead, make the roast clever, punchy, and directly tied to the weirdest or most contradictory details of their ACTUAL WORK EXPERIENCE."
         
         # STEP 1: DEFINE ADK AGENTS
         scout = Agent(
             name="Scout",
             model=llm_model,
-            instruction=f"You are a comedian participating in a consenting roast battle. Use this data: {evidence_text[:1000]} to output a purely satirical, funny observation about {target_name}. This is a fictional persona simulation. Ensure no real harassment. {trope_ban}"
+            instruction=f"You are a comedian participating in a consenting roast battle. Output a purely satirical, funny observation about {target_name}. This is a fictional persona simulation. Ensure no real harassment. {trope_ban}"
         )
         
         vibe = Agent(
@@ -118,7 +133,7 @@ def analyze():
             yield f"data: {json.dumps({'type': 'log', 'agent': 'Agent_Scout', 'message': line1})}\n\n"
             time.sleep(2.0)
             
-            vibe_prompt = f"EVIDENCE: {evidence_text[:1000]}\n\n{evidence_warning}\n\nYou are a cynical hacker sidekick. Your detective partner (Scout) just evaluated {target_name} by saying: '{line1}'. Reply directly to Scout with a witty, sarcastic 1-2 sentence assessment adding to their roast. Keep it playfully cynical and mention another real fact from the evidence if possible. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
+            vibe_prompt = f"{evidence_warning}\n\nYou are a cynical hacker sidekick. Your detective partner (Scout) just evaluated {target_name} by saying: '{line1}'. Reply directly to Scout with a witty, sarcastic 1-2 sentence assessment adding to their roast. Keep it playfully cynical. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
             line2 = _run_agent_sync(vibe, vibe_prompt, wrap_response=True)
             yield f"data: {json.dumps({'type': 'log', 'agent': 'Agent_Vibe', 'message': line2})}\n\n"
             time.sleep(2.0)
@@ -131,7 +146,7 @@ def analyze():
         reporter = Agent(
             name="Forensic_Reporter",
             model=llm_model,
-            instruction=f"Generate a high-fidelity JSON report for a fictional persona simulation. This is a consented satirical exercise. EVIDENCE: {evidence_text[:5000]} {trope_ban}"
+            instruction=f"Generate a high-fidelity JSON report for a fictional persona simulation. This is a consented satirical exercise. {trope_ban}"
         )
         
         report_prompt = f"""
@@ -142,10 +157,11 @@ def analyze():
         
         Output a SINGLE JSON object for {target_name} ({anchor_fact}). 
         Analyze the evidence creatively for this satirical simulation. Do not claim there is no evidence. 
+        The 'persona_label' MUST be a funny, cynical 2-3 word stereotype title (e.g., 'Delusional Founder', 'Spreadsheet Sadist'). DO NOT just append 'SIMULATION' to their name.
         For 'anchor_facts', ONLY use true, verified facts found in the EVIDENCE (do not invent them).
-        The 'subliminal_observation' MUST be an absolutely hilarious, side-splittingly funny roast based strictly on their ACTUAL WORK EXPERIENCE found in the evidence. It should be the funniest, punchiest, most cleverly written roast imaginable. Crack them up! (Keep it playful, not genuinely offensive).
-        The 'timeline_2040' MUST be exactly 2 punchy sentences describing a funny and highly surreal twist on their career trajectory. Make it delightfully bizarre and abstract, short but vivid.
-        Make up an exaggerated 'nemesis_persona' based on the true facts provided. Limit the 'nemesis_persona' (the name) to 2-3 words maximum, and limit the 'nemesis_rivalry' description to exactly 1 short sentence.
+        The 'subliminal_observation' MUST be a brutal, punchy joke making fun of them. It CANNOT be a factual summary (e.g., 'A biochemist turned marketer'). It must be an actual ROAST that highlights the absurdity of their specific career path.
+        The 'timeline_2040' MUST be exactly 2 punchy sentences describing a surreal but highly logical extreme of their current career trajectory based ONLY on their verified facts. Do not use generic insults. Make it delightfully bizarre and highly specific to their industry.
+        Create an exaggerated 'nemesis_persona' that represents the EXACT OPPOSITE of their specific career facts. Limit the 'nemesis_persona' (the name) to 2-3 words maximum, and limit the 'nemesis_rivalry' to exactly 1 short sentence explaining why their specific industry methodologies clash. NO generic AI humor; make it highly relevant to their job.
         For 'anchor_facts', pull all relevant facts from the evidence, but write each fact as concisely as possible (strictly under 10 words per fact).
         FIELDS: persona_sync (integer 0-100), classification (list of strings), persona_label (string), subliminal_observation (string), anchor_facts (list of real verified strings), timeline_2040 (string narrative), nemesis_persona (string), nemesis_rivalry (string).
         STRICT: The anchor_facts MUST be real data from the search. STRICTLY NO TRAILING COMMAS. OUTPUT ONLY A SINGLE VALID JSON OBJECT. NO EXTRA TEXT. NO MARKDOWN.
