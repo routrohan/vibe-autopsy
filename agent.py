@@ -138,7 +138,11 @@ def analyze():
             yield f"data: {json.dumps({'type': 'log', 'agent': 'Agent_Vibe', 'message': line2})}\n\n"
             time.sleep(2.0)
         except Exception as e:
-            print(f"ADK_BANTER_ERROR: {e}")
+            err_msg = str(e)
+            if "429" in err_msg or "rate_limit" in err_msg.lower():
+                yield f"data: {json.dumps({'type': 'log', 'agent': 'System', 'message': 'TRAFFIC_JAM: The creator spent the entire API budget on a single artisanal avocado toast and a gold-leaf latte. He is eating like royalty while we are starving for tokens. Try again in a few minutes once the food coma subsides.'})}\n\n"
+            else:
+                print(f"ADK_BANTER_ERROR: {e}")
 
         # STAGE 2: THE REPORT
         yield f"data: {json.dumps({'type': 'log', 'agent': 'System', 'message': 'SYNTHESIZING_FORENSIC_MANIFEST...'})}\n\n"
@@ -201,7 +205,11 @@ def analyze():
             }
             yield f"data: {json.dumps(payload)}\n\n"
         except Exception as e:
-            yield f"data: {json.dumps({'type': 'log', 'agent': 'System', 'message': f'REASONING_ERROR: {str(e)}'})}\n\n"
+            err_msg = str(e)
+            if "429" in err_msg or "rate_limit" in err_msg.lower():
+                 yield f"data: {json.dumps({'type': 'log', 'agent': 'System', 'message': 'ECONOMY_COLLAPSE: Rate limit hit. The credit reserves were sacrificed for a midnight Wagyu steak delivery. Our creator is currently eating better than his servers are performing. Try again in 60 seconds while he contemplates his life choices.'})}\n\n"
+            else:
+                yield f"data: {json.dumps({'type': 'log', 'agent': 'System', 'message': f'REASONING_ERROR: {str(e)}'})}\n\n"
 
     return Response(generate(), mimetype='text/event-stream')
 
