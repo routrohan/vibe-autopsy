@@ -101,7 +101,7 @@ def analyze():
         scout = Agent(
             name="Scout",
             model=llm_model,
-            instruction=f"You are a comedian participating in a consenting roast battle. Use this data: {evidence_text[:3000]} to output a purely satirical, funny observation about {target_name}. This is a fictional persona simulation. Ensure no real harassment. {trope_ban}"
+            instruction=f"You are a comedian participating in a consenting roast battle. Use this data: {evidence_text[:1000]} to output a purely satirical, funny observation about {target_name}. This is a fictional persona simulation. Ensure no real harassment. {trope_ban}"
         )
         
         vibe = Agent(
@@ -113,12 +113,12 @@ def analyze():
         # STAGE 1: BANTER (ADK POWERED)
         try:
             # We simulate the multi-agent exchange via ADK generations
-            scout_prompt = f"EVIDENCE: {evidence_text[:3000]}\n\n{evidence_warning}\n\nYou are a jaded detective hacking into {target_name}'s digital footprint. Based on the evidence above, start a conversation with your hacker sidekick (Vibe) by giving a highly satirical, witty 1-2 sentence roast of {target_name}. You MUST specifically mention a real fact from their experience or profile. Be playfully cynical. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
+            scout_prompt = f"EVIDENCE: {evidence_text[:1000]}\n\n{evidence_warning}\n\nYou are a jaded detective hacking into {target_name}'s digital footprint. Based on the evidence above, start a conversation with your hacker sidekick (Vibe) by giving a highly satirical, witty 1-2 sentence roast of {target_name}. You MUST specifically mention a real fact from their experience or profile. Be playfully cynical. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
             line1 = _run_agent_sync(scout, scout_prompt, wrap_response=True)
             yield f"data: {json.dumps({'type': 'log', 'agent': 'Agent_Scout', 'message': line1})}\n\n"
             time.sleep(2.0)
             
-            vibe_prompt = f"EVIDENCE: {evidence_text[:3000]}\n\n{evidence_warning}\n\nYou are a cynical hacker sidekick. Your detective partner (Scout) just evaluated {target_name} by saying: '{line1}'. Reply directly to Scout with a witty, sarcastic 1-2 sentence assessment adding to their roast. Keep it playfully cynical and mention another real fact from the evidence if possible. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
+            vibe_prompt = f"EVIDENCE: {evidence_text[:1000]}\n\n{evidence_warning}\n\nYou are a cynical hacker sidekick. Your detective partner (Scout) just evaluated {target_name} by saying: '{line1}'. Reply directly to Scout with a witty, sarcastic 1-2 sentence assessment adding to their roast. Keep it playfully cynical and mention another real fact from the evidence if possible. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
             line2 = _run_agent_sync(vibe, vibe_prompt, wrap_response=True)
             yield f"data: {json.dumps({'type': 'log', 'agent': 'Agent_Vibe', 'message': line2})}\n\n"
             time.sleep(2.0)
@@ -144,8 +144,9 @@ def analyze():
         Analyze the evidence creatively for this satirical simulation. Do not claim there is no evidence. 
         For 'anchor_facts', ONLY use true, verified facts found in the EVIDENCE (do not invent them).
         The 'subliminal_observation' MUST be an absolutely hilarious, side-splittingly funny roast based strictly on their ACTUAL WORK EXPERIENCE found in the evidence. It should be the funniest, punchiest, most cleverly written roast imaginable. Crack them up! (Keep it playful, not genuinely offensive).
-        The 'timeline_2040' MUST be a short (1-2 sentences max), funny, and highly surreal twist on their career trajectory. Make it delightfully bizarre and abstract!
-        Make up an exaggerated 'nemesis_persona' based on the true facts provided.
+        The 'timeline_2040' MUST be exactly 2 punchy sentences describing a funny and highly surreal twist on their career trajectory. Make it delightfully bizarre and abstract, short but vivid.
+        Make up an exaggerated 'nemesis_persona' based on the true facts provided. Limit the 'nemesis_persona' (the name) to 2-3 words maximum, and limit the 'nemesis_rivalry' description to exactly 1 short sentence.
+        For 'anchor_facts', pull all relevant facts from the evidence, but write each fact as concisely as possible (strictly under 10 words per fact).
         FIELDS: persona_sync (integer 0-100), classification (list of strings), persona_label (string), subliminal_observation (string), anchor_facts (list of real verified strings), timeline_2040 (string narrative), nemesis_persona (string), nemesis_rivalry (string).
         STRICT: The anchor_facts MUST be real data from the search. STRICTLY NO TRAILING COMMAS. OUTPUT ONLY A SINGLE VALID JSON OBJECT. NO EXTRA TEXT. NO MARKDOWN.
         """
