@@ -34,13 +34,9 @@ def _run_agent_sync(agent_obj, prompt_text: str, wrap_response: bool = False) ->
         
         if wrap_response:
             import re
-            # Extract everything after the opening tag
-            if re.search(r"<response>", text, re.IGNORECASE):
-                text = re.split(r"<response>", text, flags=re.IGNORECASE)[-1]
-            
-            # Extract everything before the closing tag (if it exists)
-            if re.search(r"</response>", text, re.IGNORECASE):
-                text = re.split(r"</response>", text, flags=re.IGNORECASE)[0]
+            # Extremely flexible regex to strip <response> tags even with spaces/newlines
+            text = re.sub(r"(?is).*?<\s*response\s*>\s*", "", text)
+            text = re.sub(r"(?is)\s*<\s*/\s*response\s*>.*", "", text)
             
             # Strip out common CoT prefixes the model might still append inside the tag
             text = re.sub(r"^(OUTPUT|RESPONSE):\s*", "", text.strip(), flags=re.IGNORECASE).strip()
@@ -94,7 +90,6 @@ def analyze():
         raw_results = search_internet(target_name, anchor_fact)
         
         # STEP 1: ISOLATE THE RIGHT PERSON (Python-side filtering)
-        # 8B models struggle with filtering namesakes internally, so we filter the data first.
         filtered_results = []
         anchor_terms = [t.lower().strip() for t in anchor_fact.replace(',', ' ').split() if len(t.strip()) > 2]
         
@@ -103,11 +98,10 @@ def analyze():
             if any(term in text for term in anchor_terms):
                 filtered_results.append(r)
                 
-        # If the filter wipes out everything, fallback to the top 2 results
         if not filtered_results:
             filtered_results = raw_results[:2]
             
-        # STEP 2: CSV ENCODING (Lossless Token Reduction)
+        # STEP 2: CSV ENCODING
         import io
         import csv
         csv_output = io.StringIO()
@@ -117,7 +111,7 @@ def analyze():
         evidence_text = csv_output.getvalue()
         
         evidence_warning = f"CRITICAL SYSTEM DIRECTIVE: The evidence above (in CSV format) contains search results for multiple different people named '{target_name}'. YOU MUST EXCLUSIVELY use facts that strictly align with the user's provided context/anchors: '{anchor_fact}'. ABSOLUTELY IGNORE any data that contradicts this context or clearly belongs to a namesake."
-        trope_ban = "STRICT TONE DIRECTIVE: DO NOT use generic AI comedy tropes or lazy insults like 'mediocre', 'boring', 'average', 'surviving on coffee', or 'synergy'. Never insult them directly. Instead, make the roast clever, punchy, and directly tied to the weirdest or most contradictory details of their ACTUAL WORK EXPERIENCE."
+        trope_ban = "STRICT TONE DIRECTIVE: DO NOT use generic AI comedy tropes or lazy insults like 'mediocre', 'boring', 'average', 'surviving on coffee', or 'synergy'. Never insult them directly. Instead, make the roast dripping with sarcasm, clever, punchy, and directly tied to the weirdest or most contradictory details of their ACTUAL WORK EXPERIENCE."
         
         # STEP 3: DEFINE ADK AGENTS
         scout = Agent(
@@ -132,28 +126,27 @@ def analyze():
             instruction=f"You are a comedian sidekick in a consenting roast battle. Respond to Scout's findings about {target_name} with a funny, satirical observation. This is a fictional persona simulation. Ensure no real harassment. {trope_ban}"
         )
 
-        # STAGE 1: BANTER (ADK POWERED)
+        # STAGE 1: BANTER
         try:
-            # We simulate the multi-agent exchange via ADK generations
-            scout_prompt = f"EVIDENCE (CSV): {evidence_text[:1000]}\n\n{evidence_warning}\n\nYou are a jaded detective hacking into {target_name}'s digital footprint. Based on the evidence above, start a conversation with your hacker sidekick (Vibe) by giving a highly satirical, witty 1-2 sentence roast of {target_name}. You MUST specifically mention a real fact from their experience or profile. Be playfully cynical. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
+            scout_prompt = f"EVIDENCE (CSV): {evidence_text[:1000]}\n\n{evidence_warning}\n\nYou are a jaded detective hacking into {target_name}'s digital footprint. Based on the evidence above, start a conversation with your hacker sidekick (Vibe) by giving a roast of {target_name} that is dripping with biting sarcasm. You MUST specifically mention a real fact from their experience or profile. Be playfully cynical. DO NOT prefix your response with your name or any tags. DO NOT OUTPUT REASONING. OUTPUT EXACTLY 1-2 SENTENCES."
             line1 = _run_agent_sync(scout, scout_prompt, wrap_response=True)
             yield f"data: {json.dumps({'type': 'log', 'agent': 'Agent_Scout', 'message': line1})}\n\n"
             time.sleep(2.0)
             
-            vibe_prompt = f"{evidence_warning}\n\nYou are a cynical hacker sidekick. Your detective partner (Scout) just evaluated {target_name} by saying: '{line1}'. Reply directly to Scout with a witty, sarcastic 1-2 sentence assessment adding to their roast. Keep it playfully cynical. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
+            vibe_prompt = f"{evidence_warning}\n\nYou are a cynical hacker sidekick. Your detective partner (Scout) just evaluated {target_name} by saying: '{line1}'. Reply directly to Scout with a biting, sarcastic 1-2 sentence assessment that doubles down on the roast. Keep it playfully cynical. DO NOT prefix your response with your name or any tags. DO NOT OUTPUT REASONING. OUTPUT EXACTLY 1-2 SENTENCES."
             line2 = _run_agent_sync(vibe, vibe_prompt, wrap_response=True)
             yield f"data: {json.dumps({'type': 'log', 'agent': 'Agent_Vibe', 'message': line2})}\n\n"
             time.sleep(2.0)
         except Exception as e:
             print(f"ADK_BANTER_ERROR: {e}")
 
-        # STAGE 2: THE REPORT (ADK POWERED)
+        # STAGE 2: THE REPORT
         yield f"data: {json.dumps({'type': 'log', 'agent': 'System', 'message': 'SYNTHESIZING_FORENSIC_MANIFEST...'})}\n\n"
         
         reporter = Agent(
             name="Forensic_Reporter",
             model=llm_model,
-            instruction=f"Generate a high-fidelity JSON report for a fictional persona simulation. This is a consented satirical exercise. {trope_ban}"
+            instruction=f"You are a forensic analyst. Output a valid JSON report based on the evidence. DO NOT output any text other than the JSON object. {trope_ban}"
         )
         
         report_prompt = f"""
@@ -162,15 +155,18 @@ def analyze():
         {evidence_warning}
         {trope_ban}
         
-        Output a SINGLE JSON object for {target_name} ({anchor_fact}). 
-        Analyze the evidence creatively for this satirical simulation. Do not claim there is no evidence. 
-        The 'persona_label' MUST be a funny, cynical 2-3 word stereotype title (e.g., 'Delusional Founder', 'Spreadsheet Sadist'). DO NOT just append 'SIMULATION' to their name.
-        For 'anchor_facts', ONLY use true, verified facts found in the EVIDENCE (do not invent them).
-        The 'subliminal_observation' MUST be a brutal, punchy joke making fun of them. It CANNOT be a factual summary (e.g., 'A biochemist turned marketer'). It must be an actual ROAST that highlights the absurdity of their specific career path.
-        The 'timeline_2040' MUST be exactly 2 punchy sentences describing a surreal but highly logical extreme of their current career trajectory based ONLY on their verified facts. Do not use generic insults. Make it delightfully bizarre and highly specific to their industry.
-        Create an exaggerated 'nemesis_persona' that represents the EXACT OPPOSITE of their specific career facts. Limit the 'nemesis_persona' (the name) to 2-3 words maximum, and limit the 'nemesis_rivalry' to exactly 1 short sentence explaining why their specific industry methodologies clash. NO generic AI humor; make it highly relevant to their job.
-        For 'anchor_facts', pull all relevant facts from the evidence, but write each fact as concisely as possible (strictly under 10 words per fact).
-        FIELDS: persona_sync (integer 0-100), classification (list of strings), persona_label (string), subliminal_observation (string), anchor_facts (list of real verified strings), timeline_2040 (string narrative), nemesis_persona (string), nemesis_rivalry (string).
+        Output exactly one JSON object for {target_name} ({anchor_fact}) with these fields:
+        - persona_sync: integer 0-100
+        - classification: list of strings (industry categories)
+        - persona_label: cynical 2-3 word title (e.g. 'Delusional Founder')
+        - subliminal_observation: a brutal roast dripping with sarcasm (NO summaries)
+        - anchor_facts: list of strings (concise facts under 10 words each)
+        - timeline_2040: 2 surreal sentences about their career trajectory (DO NOT name companies)
+        - nemesis_persona: 2-3 word name of a rival persona
+        - nemesis_rivalry: 1 sentence explaining the rivalry
+        
+        IMPORTANT: Use verified facts from the EVIDENCE. DO NOT invent facts. 
+        Wrap your response in <response> tags.
         STRICT: The anchor_facts MUST be real data from the search. STRICTLY NO TRAILING COMMAS. OUTPUT ONLY A SINGLE VALID JSON OBJECT. NO EXTRA TEXT. NO MARKDOWN.
         """
         
