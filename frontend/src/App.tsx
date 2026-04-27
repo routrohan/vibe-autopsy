@@ -96,13 +96,19 @@ function App() {
         
         {/* Header - No Absolute or Relative positioning */}
         <div className="text-center py-8 border-b border-[#4ade80]/20">
-          <h1 className="text-4xl font-black tracking-tighter text-[#4ade80] uppercase flex items-center justify-center">
+          <h1 className="text-5xl font-black tracking-tighter text-[#4ade80] uppercase flex items-center justify-center">
             <Shield className="w-10 h-10 mr-4 opacity-80" />
-            VIBE_AUTOPSY
+            HUMBLE ME
           </h1>
-          <p className="mt-4 text-[0.7rem] tracking-[0.8em] text-[#4ade80]/30 font-bold uppercase">
-             Forensic_Uplink_Established
-          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3">
+             <span className="text-[0.65rem] tracking-[0.5em] text-[#4ade80]/40 font-black uppercase">
+               ALGORITHM AUTHORED BY
+             </span>
+             <a href="https://rohanrout.com" target="_blank" rel="noopener noreferrer" className="group relative px-6 py-2 border border-orange-500/50 bg-orange-500/5 text-orange-500 hover:bg-orange-500 hover:text-[#0d1117] transition-all duration-300 font-black text-sm tracking-[0.3em] uppercase cursor-pointer shadow-[0_0_15px_rgba(249,115,22,0.15)] hover:shadow-[0_0_25px_rgba(249,115,22,0.4)]">
+               <span className="block group-hover:hidden">ROHAN ROUT</span>
+               <span className="hidden group-hover:block animate-pulse">UNMASK CREATOR ➔</span>
+             </a>
+          </div>
         </div>
 
         {/* Input Area - Simple Block Elements */}
