@@ -107,12 +107,19 @@ def analyze():
         if not filtered_results:
             filtered_results = raw_results[:2]
             
-        evidence_text = "\n".join([f"FACT: {r['title']} | DETAILS: {r['content']}" for r in filtered_results])
+        # STEP 2: CSV ENCODING (Lossless Token Reduction)
+        import io
+        import csv
+        csv_output = io.StringIO()
+        writer = csv.DictWriter(csv_output, fieldnames=["title", "content"], extrasaction='ignore', quoting=csv.QUOTE_MINIMAL)
+        writer.writeheader()
+        writer.writerows(filtered_results)
+        evidence_text = csv_output.getvalue()
         
-        evidence_warning = f"CRITICAL SYSTEM DIRECTIVE: The evidence above contains search results for multiple different people named '{target_name}'. YOU MUST EXCLUSIVELY use facts that strictly align with the user's provided context/anchors: '{anchor_fact}'. ABSOLUTELY IGNORE any data that contradicts this context or clearly belongs to a namesake."
+        evidence_warning = f"CRITICAL SYSTEM DIRECTIVE: The evidence above (in CSV format) contains search results for multiple different people named '{target_name}'. YOU MUST EXCLUSIVELY use facts that strictly align with the user's provided context/anchors: '{anchor_fact}'. ABSOLUTELY IGNORE any data that contradicts this context or clearly belongs to a namesake."
         trope_ban = "STRICT TONE DIRECTIVE: DO NOT use generic AI comedy tropes or lazy insults like 'mediocre', 'boring', 'average', 'surviving on coffee', or 'synergy'. Never insult them directly. Instead, make the roast clever, punchy, and directly tied to the weirdest or most contradictory details of their ACTUAL WORK EXPERIENCE."
         
-        # STEP 1: DEFINE ADK AGENTS
+        # STEP 3: DEFINE ADK AGENTS
         scout = Agent(
             name="Scout",
             model=llm_model,
@@ -128,7 +135,7 @@ def analyze():
         # STAGE 1: BANTER (ADK POWERED)
         try:
             # We simulate the multi-agent exchange via ADK generations
-            scout_prompt = f"EVIDENCE: {evidence_text[:1000]}\n\n{evidence_warning}\n\nYou are a jaded detective hacking into {target_name}'s digital footprint. Based on the evidence above, start a conversation with your hacker sidekick (Vibe) by giving a highly satirical, witty 1-2 sentence roast of {target_name}. You MUST specifically mention a real fact from their experience or profile. Be playfully cynical. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
+            scout_prompt = f"EVIDENCE (CSV): {evidence_text[:1000]}\n\n{evidence_warning}\n\nYou are a jaded detective hacking into {target_name}'s digital footprint. Based on the evidence above, start a conversation with your hacker sidekick (Vibe) by giving a highly satirical, witty 1-2 sentence roast of {target_name}. You MUST specifically mention a real fact from their experience or profile. Be playfully cynical. DO NOT OUTPUT REASONING OR THOUGHT PROCESS. OUTPUT EXACTLY 1-2 SENTENCES."
             line1 = _run_agent_sync(scout, scout_prompt, wrap_response=True)
             yield f"data: {json.dumps({'type': 'log', 'agent': 'Agent_Scout', 'message': line1})}\n\n"
             time.sleep(2.0)
@@ -150,7 +157,7 @@ def analyze():
         )
         
         report_prompt = f"""
-        EVIDENCE: {evidence_text[:5000]}
+        EVIDENCE (CSV): {evidence_text[:5000]}
         
         {evidence_warning}
         {trope_ban}
