@@ -87,12 +87,11 @@ def analyze():
     data = request.json
     target_name = data.get('name', 'Unknown')
     anchor_fact = data.get('context', '')
-    linkedin_url = data.get('linkedin_url', '')
 
     def generate():
         yield f"data: {json.dumps({'type': 'log', 'agent': 'System', 'message': 'ADK_PROTOCOL_INITIALIZED...'})}\n\n"
         
-        results = search_internet(target_name, f"{anchor_fact} {linkedin_url}")
+        results = search_internet(target_name, anchor_fact)
         evidence_text = "\n".join([f"FACT: {r['title']} | DETAILS: {r['content']}" for r in results])
         
         evidence_warning = f"CRITICAL SYSTEM DIRECTIVE: The evidence above contains search results for multiple different people named '{target_name}'. YOU MUST EXCLUSIVELY use facts that strictly align with the user's provided context/anchors: '{anchor_fact}'. ABSOLUTELY IGNORE any data that contradicts this context or clearly belongs to a namesake."
