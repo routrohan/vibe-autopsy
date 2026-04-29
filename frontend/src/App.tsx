@@ -185,13 +185,13 @@ function App() {
               onClick={() => setActiveTab('logs')}
               className={`flex-1 py-3 font-black text-[0.7rem] tracking-[0.3em] transition-all ${activeTab === 'logs' ? 'bg-[#4ade80] text-[#0d1117]' : 'text-[#4ade80]/40'}`}
             >
-              DIALOGUE
+              THE ROAST LOG
             </button>
             <button 
               onClick={() => setActiveTab('report')}
               className={`flex-1 py-3 font-black text-[0.7rem] tracking-[0.3em] transition-all ${activeTab === 'report' ? 'bg-[#4ade80] text-[#0d1117]' : 'text-[#4ade80]/40'} flex items-center justify-center gap-2`}
             >
-              MANIFEST {result && <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />}
+              REALITY CHECK {result && <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />}
             </button>
           </div>
 
@@ -199,7 +199,7 @@ function App() {
             {/* Logs */}
             <div className={`${activeTab === 'logs' ? 'flex' : 'hidden'} lg:flex border border-[#4ade80]/20 bg-[#0d1117] flex-col h-[500px] md:h-[700px]`}>
               <div className="bg-[#4ade80]/5 border-b border-[#4ade80]/20 px-6 py-3 text-xs md:text-sm font-black uppercase tracking-[0.3em]">
-                Agent_Protocol_Dialogue.sys
+                THE ROAST LOG
               </div>
               <div className="p-8 overflow-y-auto space-y-6 text-base md:text-lg flex-1 scrollbar-hide font-bold">
                 {logs.map((log, i) => (
@@ -218,7 +218,7 @@ function App() {
             {/* Report */}
             <div className={`${activeTab === 'report' ? 'flex' : 'hidden'} lg:flex border border-[#4ade80]/20 bg-[#0d1117] flex-col h-[600px] md:h-[700px] shadow-2xl`}>
               <div className="bg-[#4ade80]/5 border-b border-[#4ade80]/20 px-6 py-3 text-xs md:text-sm font-black uppercase text-center tracking-[0.3em]">
-                Forensic_Manifest_Report
+                REALITY CHECK
               </div>
               <div className="p-6 md:p-10 overflow-y-auto space-y-12 md:space-y-16 flex-1 scrollbar-hide">
                 {!result ? (
