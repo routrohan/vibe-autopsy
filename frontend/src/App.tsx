@@ -37,12 +37,23 @@ function App() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'logs' | 'report'>('logs');
   const logEndRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     window.history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (result) {
+      setActiveTab('report');
+      setTimeout(() => {
+        gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [result]);
 
   const scrollToBottom = () => {
     if (logs.length > 0) {
@@ -56,6 +67,7 @@ function App() {
     setLoading(true);
     setLogs([]);
     setResult(null);
+    setActiveTab('logs');
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
     try {
       const response = await fetch(`${API_URL}/analyze`, {
@@ -100,7 +112,7 @@ function App() {
     <div className="bg-[#0d1117] min-h-screen text-[#4ade80] font-mono p-4 md:p-6 relative">
       <div className="max-w-6xl mx-auto space-y-10">
         
-        {/* Header - No Absolute or Relative positioning */}
+        {/* Header */}
         <div className="text-center py-8 border-b border-[#4ade80]/20">
           <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-[#4ade80] uppercase flex items-center justify-center">
             <Shield className="w-8 h-8 md:w-10 md:h-10 mr-3 md:mr-4 opacity-80" />
@@ -123,7 +135,7 @@ function App() {
           </div>
         </div>
 
-        {/* Input Area - Simple Block Elements */}
+        {/* Input Area */}
         <div className="bg-[#161b22] border border-[#4ade80]/20 p-6 md:p-10">
           
           <div className="mb-10 p-4 border border-yellow-500/30 bg-yellow-500/5 text-yellow-500/80 text-xs md:text-sm font-black uppercase tracking-[0.2em] leading-relaxed text-center">
@@ -163,125 +175,148 @@ function App() {
               [NOTE]: Drop a company, university, or city here so the algorithm locks onto the right person.
             </div>
           </div>
-
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {/* Logs */}
-          <div className="border border-[#4ade80]/20 bg-[#0d1117] flex flex-col h-[500px] md:h-[700px]">
-            <div className="bg-[#4ade80]/5 border-b border-[#4ade80]/20 px-6 py-3 text-xs md:text-sm font-black uppercase tracking-[0.3em]">
-              Agent_Protocol_Dialogue.sys
-            </div>
-            <div className="p-8 overflow-y-auto space-y-6 text-base md:text-lg flex-1 scrollbar-hide font-bold">
-              {logs.map((log, i) => (
-                <div key={i} className="flex space-x-4 border-l-2 border-[#4ade80]/10 pl-4">
-                  <span className={`text-sm md:text-base uppercase shrink-0 mt-1 font-black ${
-                    log.agent === 'Agent_Scout' ? 'text-cyan-400' : 
-                    log.agent === 'Agent_Vibe' ? 'text-orange-400' : 'text-[#4ade80]/40'
-                  }`}>{log.agent}:</span>
-                  <span className="opacity-95 text-[#f0f0f0] font-medium leading-relaxed tracking-normal"><SafeRender value={log.message} /></span>
-                </div>
-              ))}
-              <div ref={logEndRef} />
-            </div>
+        {/* Main Grid Area */}
+        <div ref={gridRef} className="space-y-4">
+          {/* Mobile Tab Switcher */}
+          <div className="flex lg:hidden border border-[#4ade80]/20 bg-[#161b22] p-1">
+            <button 
+              onClick={() => setActiveTab('logs')}
+              className={`flex-1 py-3 font-black text-[0.7rem] tracking-[0.3em] transition-all ${activeTab === 'logs' ? 'bg-[#4ade80] text-[#0d1117]' : 'text-[#4ade80]/40'}`}
+            >
+              DIALOGUE
+            </button>
+            <button 
+              onClick={() => setActiveTab('report')}
+              className={`flex-1 py-3 font-black text-[0.7rem] tracking-[0.3em] transition-all ${activeTab === 'report' ? 'bg-[#4ade80] text-[#0d1117]' : 'text-[#4ade80]/40'} flex items-center justify-center gap-2`}
+            >
+              MANIFEST {result && <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />}
+            </button>
           </div>
 
-          {/* Report */}
-          <div className="border border-[#4ade80]/20 bg-[#0d1117] flex flex-col h-[600px] md:h-[700px] shadow-2xl">
-            <div className="bg-[#4ade80]/5 border-b border-[#4ade80]/20 px-6 py-3 text-xs md:text-sm font-black uppercase text-center tracking-[0.3em]">
-              Forensic_Manifest_Report
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Logs */}
+            <div className={`${activeTab === 'logs' ? 'flex' : 'hidden'} lg:flex border border-[#4ade80]/20 bg-[#0d1117] flex-col h-[500px] md:h-[700px]`}>
+              <div className="bg-[#4ade80]/5 border-b border-[#4ade80]/20 px-6 py-3 text-xs md:text-sm font-black uppercase tracking-[0.3em]">
+                Agent_Protocol_Dialogue.sys
+              </div>
+              <div className="p-8 overflow-y-auto space-y-6 text-base md:text-lg flex-1 scrollbar-hide font-bold">
+                {logs.map((log, i) => (
+                  <div key={i} className="flex space-x-4 border-l-2 border-[#4ade80]/10 pl-4">
+                    <span className={`text-sm md:text-base uppercase shrink-0 mt-1 font-black ${
+                      log.agent === 'Agent_Scout' ? 'text-cyan-400' : 
+                      log.agent === 'Agent_Vibe' ? 'text-orange-400' : 'text-[#4ade80]/40'
+                    }`}>{log.agent}:</span>
+                    <span className="opacity-95 text-[#f0f0f0] font-medium leading-relaxed tracking-normal"><SafeRender value={log.message} /></span>
+                  </div>
+                ))}
+                <div ref={logEndRef} />
+              </div>
             </div>
-            <div className="p-6 md:p-10 overflow-y-auto space-y-12 md:space-y-16 flex-1 scrollbar-hide">
-              {result && (
-                <div className="space-y-16 font-bold animate-in fade-in duration-1000">
-                  <div className="border-b border-[#4ade80]/10 pb-12">
-                    <div className="text-xs md:text-sm text-[#4ade80]/40 uppercase mb-4 font-black tracking-widest uppercase">Digital Persona Identification</div>
-                    <div className="text-3xl font-black text-[#0d1117] bg-[#4ade80] px-6 py-2 inline-block uppercase mb-12 shadow-[10px_10px_0_rgba(74,222,128,0.1)]">
-                      <SafeRender value={result.persona_label} />
+
+            {/* Report */}
+            <div className={`${activeTab === 'report' ? 'flex' : 'hidden'} lg:flex border border-[#4ade80]/20 bg-[#0d1117] flex-col h-[600px] md:h-[700px] shadow-2xl`}>
+              <div className="bg-[#4ade80]/5 border-b border-[#4ade80]/20 px-6 py-3 text-xs md:text-sm font-black uppercase text-center tracking-[0.3em]">
+                Forensic_Manifest_Report
+              </div>
+              <div className="p-6 md:p-10 overflow-y-auto space-y-12 md:space-y-16 flex-1 scrollbar-hide">
+                {!result ? (
+                  <div className="h-full flex flex-col items-center justify-center space-y-6 opacity-20">
+                    <Skull className="w-16 h-16" />
+                    <div className="text-xs font-black tracking-[0.5em] uppercase text-center">Waiting_for_Uplink...</div>
+                  </div>
+                ) : (
+                  <div className="space-y-16 font-bold animate-in fade-in duration-1000">
+                    <div className="border-b border-[#4ade80]/10 pb-12">
+                      <div className="text-xs md:text-sm text-[#4ade80]/40 uppercase mb-4 font-black tracking-widest uppercase">Digital Persona Identification</div>
+                      <div className="text-3xl font-black text-[#0d1117] bg-[#4ade80] px-6 py-2 inline-block uppercase mb-12 shadow-[10px_10px_0_rgba(74,222,128,0.1)]">
+                        <SafeRender value={result.persona_label} />
+                      </div>
+                      
+                      <div className="space-y-6">
+                          <div className="text-xs md:text-sm text-[#4ade80]/40 uppercase mb-3 font-black tracking-widest uppercase">Persona Sync Index</div>
+                          <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-12">
+                            <div className={`text-5xl md:text-6xl font-black ${result.integrity_score > 70 ? 'text-[#4ade80]' : 'text-orange-500'} tracking-tighter tabular-nums`}>
+                              {result.integrity_score}<span className="text-2xl md:text-3xl opacity-30 ml-2 md:ml-4 font-black">%</span>
+                            </div>
+                            <div className="text-sm md:text-base text-[#e0e0e0]/60 leading-relaxed border-l-2 border-[#4ade80]/20 pl-6 md:pl-8 font-medium max-w-[300px] tracking-normal">
+                              Alignment between your curated profile and actual digital footprint.
+                            </div>
+                          </div>
+                      </div>
                     </div>
-                    
+
                     <div className="space-y-6">
-                        <div className="text-xs md:text-sm text-[#4ade80]/40 uppercase mb-3 font-black tracking-widest uppercase">Persona Sync Index</div>
-                        <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-12">
-                          <div className={`text-5xl md:text-6xl font-black ${result.integrity_score > 70 ? 'text-[#4ade80]' : 'text-orange-500'} tracking-tighter tabular-nums`}>
-                            {result.integrity_score}<span className="text-2xl md:text-3xl opacity-30 ml-2 md:ml-4 font-black">%</span>
+                      <div className="text-lg font-black uppercase text-[#4ade80] tracking-[0.3em] uppercase">Digital Classification</div>
+                      <div className="text-xs md:text-sm text-[#4ade80]/40 uppercase mb-4 font-black tracking-widest border-b border-[#4ade80]/10 pb-4 mt-2">HOW THE ALGORITHM CATEGORIZES YOUR DIGITAL FOOTPRINT.</div>
+                      <ul className="space-y-4 pl-4">
+                        {result.classification_list?.map((c, i) => (
+                          <li key={i} className="text-[1.1rem] flex items-start">
+                            <span className="text-[#4ade80] mr-5 font-black mt-1 uppercase text-lg">»</span>
+                            <span className="text-[#f0f0f0] font-medium capitalize tracking-normal"><SafeRender value={c} /></span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="bg-orange-500/5 border-l-4 border-orange-500 p-6 md:p-12 relative shadow-lg">
+                      <div className="text-sm md:text-base text-orange-500 font-black uppercase tracking-[0.5em]">Subliminal Observation</div>
+                      <div className="text-xs md:text-sm text-orange-500/60 uppercase font-black tracking-widest italic mb-6 mt-2">THE UNFILTERED TAKEAWAY FROM YOUR CAREER HISTORY.</div>
+                      <p className="text-[1.2rem] leading-relaxed text-orange-50 font-medium antialiased tracking-normal">
+                        "<SafeRender value={result.brutal_roast} />"
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-12">
+                      <div className="border border-purple-500/20 bg-purple-500/5 p-6 md:p-10 shadow-xl">
+                        <div className="mb-8">
+                          <div className="flex items-center space-x-4 text-purple-400 uppercase text-sm md:text-base font-black tracking-[0.5em] text-xs mb-2">
+                            <TrendingUp className="w-7 h-7" />
+                            <span>Destiny Manifest 2040</span>
                           </div>
-                          <div className="text-sm md:text-base text-[#e0e0e0]/60 leading-relaxed border-l-2 border-[#4ade80]/20 pl-6 md:pl-8 font-medium max-w-[300px] tracking-normal">
-                            Alignment between your curated profile and actual digital footprint.
+                          <div className="text-xs md:text-sm text-purple-400/60 uppercase font-black tracking-widest italic pl-11">WHERE YOUR CURRENT TRAJECTORY WILL INEVITABLY LEAD.</div>
+                        </div>
+                        <div className="text-[1.1rem] text-purple-100 font-medium leading-relaxed antialiased tracking-normal">
+                          <SafeRender value={result.future_milestone} />
+                        </div>
+                      </div>
+
+                      <div className="border border-red-500/20 bg-red-500/5 p-6 md:p-10 shadow-xl">
+                        <div className="flex items-center space-x-4 text-red-500 mb-8 uppercase text-sm md:text-base font-black tracking-[0.5em]">
+                          <Skull className="w-7 h-7" />
+                          <span>Adversary Signature</span>
+                        </div>
+                        <div className="space-y-8">
+                          <div className="text-xs md:text-sm text-red-500/50 uppercase font-black tracking-widest italic mb-2 uppercase">Your ultimate corporate rival based on your career.</div>
+                          <div className="text-xl text-red-100 font-black uppercase tracking-widest border-b border-red-500/10 pb-6 uppercase">
+                              <SafeRender value={result.nemesis_persona} />
                           </div>
+                          <p className="text-[1.1rem] text-red-200 font-medium leading-relaxed tracking-normal">
+                            <SafeRender value={result.nemesis_rivalry} />
+                          </p>
                         </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="text-lg font-black uppercase text-[#4ade80] tracking-[0.3em] uppercase">Digital Classification</div>
-                    <div className="text-xs md:text-sm text-[#4ade80]/40 uppercase mb-4 font-black tracking-widest border-b border-[#4ade80]/10 pb-4 mt-2">HOW THE ALGORITHM CATEGORIZES YOUR DIGITAL FOOTPRINT.</div>
-                    <ul className="space-y-4 pl-4">
-                      {result.classification_list?.map((c, i) => (
-                        <li key={i} className="text-[1.1rem] flex items-start">
-                          <span className="text-[#4ade80] mr-5 font-black mt-1 uppercase text-lg">»</span>
-                          <span className="text-[#f0f0f0] font-medium capitalize tracking-normal"><SafeRender value={c} /></span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="bg-orange-500/5 border-l-4 border-orange-500 p-6 md:p-12 relative shadow-lg">
-                    <div className="text-sm md:text-base text-orange-500 font-black uppercase tracking-[0.5em]">Subliminal Observation</div>
-                    <div className="text-xs md:text-sm text-orange-500/60 uppercase font-black tracking-widest italic mb-6 mt-2">THE UNFILTERED TAKEAWAY FROM YOUR CAREER HISTORY.</div>
-                    <p className="text-[1.2rem] leading-relaxed text-orange-50 font-medium antialiased tracking-normal">
-                      "<SafeRender value={result.brutal_roast} />"
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-12">
-                    <div className="border border-purple-500/20 bg-purple-500/5 p-6 md:p-10 shadow-xl">
-                      <div className="mb-8">
-                        <div className="flex items-center space-x-4 text-purple-400 uppercase text-sm md:text-base font-black tracking-[0.5em] text-xs mb-2">
-                          <TrendingUp className="w-7 h-7" />
-                          <span>Destiny Manifest 2040</span>
-                        </div>
-                        <div className="text-xs md:text-sm text-purple-400/60 uppercase font-black tracking-widest italic pl-11">WHERE YOUR CURRENT TRAJECTORY WILL INEVITABLY LEAD.</div>
-                      </div>
-                      <div className="text-[1.1rem] text-purple-100 font-medium leading-relaxed antialiased tracking-normal">
-                        <SafeRender value={result.future_milestone} />
                       </div>
                     </div>
 
-                    <div className="border border-red-500/20 bg-red-500/5 p-6 md:p-10 shadow-xl">
-                      <div className="flex items-center space-x-4 text-red-500 mb-8 uppercase text-sm md:text-base font-black tracking-[0.5em]">
-                        <Skull className="w-7 h-7" />
-                        <span>Adversary Signature</span>
+                    <div className="space-y-8 pb-16">
+                      <div className="text-center">
+                          <div className="text-base text-[#4ade80]/20 font-black uppercase tracking-[0.8em] inline-block text-xs mb-2">
+                             --- Verified_Nodes ---
+                          </div>
+                          <div className="text-xs md:text-sm text-[#4ade80]/20 uppercase font-black tracking-widest italic block">THE HARD FACTS PULLED FROM YOUR PUBLIC FOOTPRINT.</div>
                       </div>
-                      <div className="space-y-8">
-                        <div className="text-xs md:text-sm text-red-500/50 uppercase font-black tracking-widest italic mb-2 uppercase">Your ultimate corporate rival based on your career.</div>
-                        <div className="text-xl text-red-100 font-black uppercase tracking-widest border-b border-red-500/10 pb-6 uppercase">
-                            <SafeRender value={result.nemesis_persona} />
-                        </div>
-                        <p className="text-[1.1rem] text-red-200 font-medium leading-relaxed tracking-normal">
-                          <SafeRender value={result.nemesis_rivalry} />
-                        </p>
+                      <div className="flex flex-wrap gap-6 justify-center">
+                        {result.anchor_facts?.map((f, i) => (
+                          <div key={i} className="text-sm md:text-base border border-[#4ade80]/10 px-6 py-3 bg-black/40 text-[#4ade80]/60 tracking-tighter font-black uppercase hover:text-[#4ade80] hover:border-[#4ade80]/40 transition-all cursor-crosshair">
+                            {'>'} <SafeRender value={f} />
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
-
-                  <div className="space-y-8 pb-16">
-                    <div className="text-center">
-                        <div className="text-base text-[#4ade80]/20 font-black uppercase tracking-[0.8em] inline-block text-xs mb-2">
-                           --- Verified_Nodes ---
-                        </div>
-                        <div className="text-xs md:text-sm text-[#4ade80]/20 uppercase font-black tracking-widest italic block">THE HARD FACTS PULLED FROM YOUR PUBLIC FOOTPRINT.</div>
-                    </div>
-                    <div className="flex flex-wrap gap-6 justify-center">
-                      {result.anchor_facts?.map((f, i) => (
-                        <div key={i} className="text-sm md:text-base border border-[#4ade80]/10 px-6 py-3 bg-black/40 text-[#4ade80]/60 tracking-tighter font-black uppercase hover:text-[#4ade80] hover:border-[#4ade80]/40 transition-all cursor-crosshair">
-                          {'>'} <SafeRender value={f} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
