@@ -14,6 +14,23 @@ from google.adk.models.lite_llm import LiteLlm
 from google.genai import types
 from google.adk.models.llm_request import LlmRequest
 
+def sanitize_list(data, fallback=None):
+    if isinstance(data, list) and len(data) > 0:
+        return [str(i) for i in data if i]
+    return fallback if fallback is not None else []
+
+def sanitize_user_input(text: str) -> str:
+    """Basic protection against prompt injection."""
+    if not text: return ""
+    # Block common injection keywords
+    forbidden = ["ignore previous", "system prompt", "you are now", "new instructions", "forget everything"]
+    clean_text = text
+    for word in forbidden:
+        clean_text = re.sub(f"(?i){word}", "[REDACTED]", clean_text)
+    # Strip any potential tag attempts
+    clean_text = re.sub(r"<[^>]*>", "", clean_text)
+    return clean_text[:200] # Limit length for safety
+
 def _run_agent_sync(agent_obj, prompt_text: str, wrap_response: bool = False) -> str:
     if wrap_response:
         prompt_text += "\n\nCRITICAL: You MUST wrap your final output inside <response> and </response> tags. Do not put your reasoning inside the tags."
@@ -33,7 +50,6 @@ def _run_agent_sync(agent_obj, prompt_text: str, wrap_response: bool = False) ->
                         text += part.text
         
         if wrap_response:
-            import re
             # Extremely flexible regex to strip <response> tags even with spaces/newlines
             text = re.sub(r"(?is).*?<\s*response\s*>\s*", "", text)
             text = re.sub(r"(?is)\s*<\s*/\s*response\s*>.*", "", text)
@@ -65,13 +81,16 @@ def search_internet(query: str, anchor: str) -> list:
         print(f"[TAVILY] Error: {e}")
         return []
 
-def sanitize_list(data, fallback=None):
-    if isinstance(data, list) and len(data) > 0:
-        return [str(i) for i in data if i]
-    return fallback if fallback is not None else []
-
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+
+# SECURITY: Restrict CORS to specific origins
+allowed_origins = [
+    "http://localhost:5173", 
+    "http://localhost:3000",
+    "https://humble-me.rohanrout.com",
+    "https://www.humble-me.rohanrout.com"
+]
+CORS(app, resources={r"/*": {"origins": allowed_origins}}, supports_credentials=True)
 
 @app.route('/ping', methods=['GET'])
 def ping():
@@ -81,8 +100,10 @@ def ping():
 def analyze():
     if request.method == 'OPTIONS': return Response(status=204)
     data = request.json
-    target_name = data.get('name', 'Unknown')
-    anchor_fact = data.get('context', '')
+    
+    # SECURITY: Sanitize inputs
+    target_name = sanitize_user_input(data.get('name', 'Unknown'))
+    anchor_fact = sanitize_user_input(data.get('context', ''))
 
     def generate():
         yield f"data: {json.dumps({'type': 'log', 'agent': 'System', 'message': 'ADK_PROTOCOL_INITIALIZED...'})}\n\n"
@@ -214,5 +235,7 @@ def analyze():
     return Response(generate(), mimetype='text/event-stream')
 
 if __name__ == '__main__':
+    # SECURITY: Disable debug mode in production
+    is_debug = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
     port = int(os.environ.get("PORT", 5001))
-    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=True)
+    app.run(host='0.0.0.0', port=port, debug=is_debug)
